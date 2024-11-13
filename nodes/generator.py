@@ -3,6 +3,7 @@ import comfy.sd
 import comfy.utils
 import torch
 from .utils import any_type, load_lora
+from .pure_utils import hash_var
 from .types import LoraMetadata, LoraMetadataOutput, GeneratorForward
 import comfy.samplers
 
@@ -164,6 +165,10 @@ class SQCheckpointLoader:
             output_clip=True,
             embedding_directory=folder_paths.get_folder_paths("embeddings"),
         )
+        print(
+            f"checkpoint loaded: {ckpt_name} {hash_var(str(out[0]))} {hash_var(str(out[1]))} {hash_var(str(out[2]))}"
+        )
+
         return out[:3]
 
 
@@ -194,6 +199,7 @@ class SQVaeLoader:
 
     def load(self, vae_name, built_in):
         if vae_name == builtin_vae:
+            print(f"vae loaded: built-in {hash_var(str(built_in))}")
             return (built_in,)
         if vae_name in ["taesd", "taesdxl", "taesd3", "taef1"]:
             sd = load_taesd(vae_name)
@@ -201,6 +207,9 @@ class SQVaeLoader:
             vae_path = folder_paths.get_full_path_or_raise("vae", vae_name)
             sd = comfy.utils.load_torch_file(vae_path)
         vae = comfy.sd.VAE(sd=sd)
+
+        print(f"vae loaded: {vae_name} {hash_var(str(vae))}")
+
         return (vae,)
 
 
@@ -252,6 +261,10 @@ class SQLoraChainLoader:
         else:
             chain = chain + [param]
 
+        print(
+            f"lora loaded: {lora_name} {hash_var(str(model_lora))} {hash_var(str(clip_lora))}"
+        )
+
         return (model_lora, clip_lora, chain)
 
 
@@ -279,6 +292,7 @@ class SQLoraAutoLoader:
         ls: list[LoraMetadataOutput] = loras
         model_lora = model
         clip_lora = clip
+        print(f"loading loras: {ls}")
         for l in ls:
             if l["model_strength"] == 0 and l["clip_strength"] == 0:
                 continue
@@ -288,6 +302,10 @@ class SQLoraAutoLoader:
                 l["name"],
                 l["model_strength"],
                 l["clip_strength"],
+            )
+
+            print(
+                f"lora loaded: {l['name']} {hash_var(str(model_lora))} {hash_var(str(clip_lora))}"
             )
 
         return (model_lora, clip_lora)

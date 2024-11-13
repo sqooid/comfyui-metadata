@@ -1,9 +1,27 @@
+import copy
 from typing import Any, Optional
 
 import torch
 from .utils import any_type
-from .pure_utils import parse_text
+from .pure_utils import hash_var, parse_text
 from .types import PromptChain
+
+
+def concat_cond(cond1, cond2):
+    out = []
+    for i in range(len(cond1)):
+        t1 = cond1[i][0]
+        tw = torch.cat((t1, cond2[0][0]), 1)
+        n = [tw, cond1[i][1].copy()]
+        out.append(n)
+    return out
+
+
+def encode_cond(clip, text):
+    tokens = clip.tokenize(text)
+    output = clip.encode_from_tokens(tokens, return_pooled=True, return_dict=True)
+    cond = output.pop("cond")
+    return [[cond, output]]
 
 
 class SQChainPrompt:
@@ -38,23 +56,48 @@ class SQChainPrompt:
         clip: Any = None,
         chain: Optional[PromptChain] = None,
     ):
+        # parse prompt
         text = parse_text(prompt)
+        # get clip
         if chain is not None and clip is None:
             clip = chain["clip"]
-        tokens = clip.tokenize(text)
-        output = clip.encode_from_tokens(tokens, return_pooled=True, return_dict=True)
-        cond = output.pop("cond")
-        conditioning = [[cond, output]]
+        conditioning = encode_cond(clip, text)
+        # chain prompts
         if chain is None:
-            chain = {"prompts": [prompt], "conditioning": conditioning, "clip": clip}
+            chain = {"prompts": [text], "conditioning": conditioning, "clip": clip}
             new_cond = conditioning
         else:
-            chain["prompts"] = chain["prompts"] + [prompt]
-            new_cond = []
-            conditioning_to = chain["conditioning"]
-            for i in range(len(conditioning_to)):
-                t1 = conditioning_to[i][0]
-                tw = torch.cat((t1, cond), 1)
-                n = [tw, conditioning_to[i][1].copy()]
-                new_cond.append(n)
+            new_cond = concat_cond(chain["conditioning"], conditioning)
+            chain["conditioning"] = new_cond
+            chain["prompts"] = chain["prompts"] + [text]
+
+        print(f"prompt loaded {text[:8]}... {hash_var(str(new_cond))}")
+
         return chain, new_cond, chain["prompts"]
+
+
+class SQAutoPrompt:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "prompts": (any_type,),
+                "clip": ("CLIP",),
+            },
+        }
+
+    RETURN_TYPES = ("CONDITIONING",)
+    RETURN_NAMES = ("conditioning",)
+    CATEGORY = "SQNodes"
+    FUNCTION = "parse"
+    DESCRIPTION = "Chain prompts with conditioning concat"
+
+    def parse(self, prompts: list[str], clip):
+        conditioning = encode_cond(clip, prompts[0])
+        print(f"prompt loaded: {prompts[0][:8]}... {hash_var(str(conditioning))}")
+        for p in prompts[1:]:
+            conditioning = concat_cond(conditioning, encode_cond(clip, p))
+
+            print(f"prompt loaded: {p[:8]}... {hash_var(str(conditioning))}")
+
+        return (conditioning,)

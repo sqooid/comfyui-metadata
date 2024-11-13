@@ -39,19 +39,19 @@ def format_filename(filename: str, index: int, timestamp_format: Optional[str] =
 def calculate_hash(
     cache: typing.Dict[str, str],
     name: str,
-    type: typing.Literal["model", "vae", "lora"],
+    file_type: typing.Literal["model", "vae", "lora"],
 ):
     cached = cache.get(name)
     if cached:
         return cached
-    if type == "model":
+    if file_type == "model":
         filename = folder_paths.get_full_path("checkpoints", name)
-    elif type == "vae":
+    elif file_type == "vae":
         filename = folder_paths.get_full_path("vae", name)
-    elif type == "lora":
+    elif file_type == "lora":
         filename = folder_paths.get_full_path("loras", name)
     if not filename:
-        raise FileNotFoundError(f"File not found: {filename}")
+        raise FileNotFoundError(f"File not found: {file_type} {name}")
     sha256 = hashlib.sha256()
     blksize = 1024 * 1024
 
@@ -72,7 +72,6 @@ def save_image(
     prompt,
     extra_pnginfo,
     metadata: MetadataOutput,
-    hash_cache: typing.Dict[str, str],
     compress_level: int = 4,
     timestamp_format: Optional[str] = None,
 ):
@@ -102,7 +101,6 @@ def save_image(
 
 
 def load_lora(model, clip, lora_name, model_strength, clip_strength):
-
     lora_path = folder_paths.get_full_path("loras", lora_name)
     lora = comfy.utils.load_torch_file(lora_path, safe_load=True)
 

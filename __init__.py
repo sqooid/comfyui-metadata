@@ -12,6 +12,7 @@ NODE_CLASS_MAPPINGS = {
     "SQ Lora Chain Loader": SQLoraChainLoader,
     "SQ Lora Auto Loader": SQLoraAutoLoader,
     "SQ Prompt Chain": SQChainPrompt,
+    "SQ Prompt Auto": SQAutoPrompt,
 }
 
 __all__ = ["NODE_CLASS_MAPPINGS"]

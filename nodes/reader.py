@@ -1,3 +1,5 @@
+import json
+import os
 from typing import Optional
 from PIL import Image
 import folder_paths
@@ -16,7 +18,7 @@ class SQImageReader:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "The name of the checkpoint (model) to load.",
+                        "tooltip": "Image file to read metadata from",
                     },
                 ),
             },
@@ -58,13 +60,18 @@ class SQImageReader:
     DESCRIPTION = "Save images with reusable generation metadata"
 
     def read(self, filepath: str):
+        print(f"File: {filepath}")
+        if filepath.startswith("."):
+            filepath = os.path.join(folder_paths.get_output_directory(), filepath)
         with open(filepath, "rb") as f:
             img = Image.open(f)
             img.load()
             info = img.info
-            metadata: Optional[MetadataOutput] = info.get("metadata")
-            if metadata is None:
+            metadata_json = info.get("metadata")
+            if metadata_json is None:
                 raise ValueError("No compatible metadata found")
+            metadata: MetadataOutput = json.loads(metadata_json)
+            print(metadata)
             model_name = metadata["model"]["name"]
             vae_name = metadata["vae"]["name"]
             loras = metadata["loras"]

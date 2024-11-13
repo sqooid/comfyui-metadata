@@ -1,5 +1,6 @@
 import random
 import re
+import hashlib
 
 
 def parse_text(text: str):
@@ -15,6 +16,13 @@ def parse_text(text: str):
     s = filter(bool, s)
     text = ", ".join(s)
     return text
+
+
+def hash_var(var: str):
+    sha256 = hashlib.sha256()
+    sha256.update(var.encode())
+    hash_value = sha256.hexdigest()[:10]
+    return hash_value
 
 
 if __name__ == "__main__":

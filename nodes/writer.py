@@ -17,6 +17,9 @@ class SQImageWriter:
                 "directory": ("STRING", {"default": "."}),
                 "filename": ("STRING", {"default": "image_${3}.png"}),
                 "timestamp_format": ("STRING", {"default": "%Y%m%d-%H%M%S"}),
+                "final": (["true", "false"], {"default": "false"}),
+            },
+            "optional": {
                 "loras": (any_type,),
                 "seed": ("INT", {"default": 0}),
                 "steps": ("INT", {"default": 0}),
@@ -26,9 +29,6 @@ class SQImageWriter:
                 "positive": (any_type,),
                 "negative": (any_type,),
                 "generator_forward": (any_type,),
-                "final": (["true", "false"], {"default": "false"}),
-            },
-            "optional": {
                 "reader_forward": (any_type,),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
@@ -47,7 +47,7 @@ class SQImageWriter:
         directory: str,
         filename: str,
         timestamp_format: str,
-        final: Literal["true", "false"],
+        final: Literal["true", "false"] = "false",
         loras: Optional[list[LoraMetadata]] = None,
         seed: Optional[int] = None,
         steps: Optional[int] = None,
@@ -94,12 +94,18 @@ class SQImageWriter:
                         self.hash_cache, generator_forward["model_name"], "model"
                     ),
                 },
-                "vae": {
-                    "name": generator_forward["vae_name"],
-                    "sha": calculate_hash(
-                        self.hash_cache, generator_forward["vae_name"], "vae"
-                    ),
-                },
+                "vae": (
+                    {
+                        "name": generator_forward["vae_name"],
+                        "sha": (
+                            calculate_hash(
+                                self.hash_cache, generator_forward["vae_name"], "vae"
+                            )
+                            if generator_forward["vae_name"] != "built-in"
+                            else ""
+                        ),
+                    }
+                ),
                 "loras": [
                     {
                         "name": lora["name"],
@@ -126,7 +132,6 @@ class SQImageWriter:
             prompt,
             extra_pnginfo,
             metadata,
-            self.hash_cache,
             timestamp_format=timestamp_format,
         )
         print(f"Saved image to {filename}")
