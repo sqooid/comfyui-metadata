@@ -50,6 +50,10 @@ class SQChainPrompt:
     FUNCTION = "parse"
     DESCRIPTION = "Chain prompts with conditioning concat for longer attention. Pass prompts output to pos/neg writer input"
 
+    @classmethod
+    def IS_CHANGED(cls):
+        return float("NaN")
+
     def parse(
         self,
         prompt: str,
