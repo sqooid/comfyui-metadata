@@ -72,6 +72,7 @@ def save_image(
     prompt,
     extra_pnginfo,
     metadata: MetadataOutput,
+    final: bool = False,
     compress_level: int = 4,
     timestamp_format: Optional[str] = None,
 ):
@@ -84,14 +85,16 @@ def save_image(
 
     mdata = None
     mdata = PngInfo()
-    if not args.disable_metadata:
-        if prompt is not None:
-            mdata.add_text("prompt", json.dumps(prompt))
-        if extra_pnginfo is not None:
-            for x in extra_pnginfo:
-                mdata.add_text(x, json.dumps(extra_pnginfo[x]))
-
+    mdata.add_text("parameters", format_civit_metadata(metadata))
     mdata.add_text("metadata", json.dumps(metadata))
+    if not final:
+        if not args.disable_metadata:
+            if prompt is not None:
+                mdata.add_text("prompt", json.dumps(prompt))
+            if extra_pnginfo is not None:
+                for x in extra_pnginfo:
+                    mdata.add_text(x, json.dumps(extra_pnginfo[x]))
+
     img.save(
         os.path.join(output_path, filename),
         pnginfo=mdata,
@@ -108,3 +111,35 @@ def load_lora(model, clip, lora_name, model_strength, clip_strength):
         model, clip, lora, model_strength, clip_strength
     )
     return model_lora, clip_lora
+
+
+def format_civit_metadata(metadata: MetadataOutput):
+    positive = ",".join(metadata["positive"])
+    negative = "Negative prompt: " + ",".join(metadata["negative"])
+    lora_hashes = ", ".join(
+        [f"{lora['name']}: {lora['sha']}" for lora in metadata["loras"]]
+    )
+    hashes_dict = {
+        "model": metadata["model"]["sha"],
+    }
+    for lora in metadata["loras"]:
+        hashes_dict[f'lora:{lora["name"]}'] = lora["sha"]
+    if metadata["vae"]["name"] != "built-in":
+        hashes_dict[metadata["vae"]["name"]] = metadata["vae"]["sha"]
+    hashes = json.dumps(hashes_dict)
+    settings = ", ".join(
+        [
+            f"Steps: {metadata['steps']}",
+            f"Sampler: {metadata['sampler']}_{metadata['scheduler']}",
+            f"CFG scale: {metadata['cfg']}",
+            f"Seed: {metadata['seed']}",
+            f"Size: {metadata['width']}x{metadata['height']}",
+            f"Model hash: {metadata['model']['sha']}",
+            f"Model: {metadata['model']['name']}",
+            f'Lora hashes: "{lora_hashes}"',
+            f'TI hashes: ""',
+            f"Version: ComfyUI",
+            f"Hashes: {hashes}",
+        ]
+    )
+    return "\n".join([positive, negative, settings])

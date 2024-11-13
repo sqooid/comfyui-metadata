@@ -15,9 +15,18 @@ class SQImageWriter:
             "required": {
                 "image": ("IMAGE",),
                 "directory": ("STRING", {"default": "."}),
-                "filename": ("STRING", {"default": "image_${3}.png"}),
+                "filename": (
+                    "STRING",
+                    {
+                        "default": "image_${3}.png",
+                        "tooltip": "Use ${n} to label index with padding n. Use $timestamp to insert timestamp as formatted",
+                    },
+                ),
                 "timestamp_format": ("STRING", {"default": "%Y%m%d-%H%M%S"}),
-                "final": (["true", "false"], {"default": "false"}),
+                "final": (
+                    ["true", "false"],
+                    {"default": "false", "tooltip": "Remove ConfyUI workflow metadata"},
+                ),
             },
             "optional": {
                 "loras": (any_type,),
@@ -28,8 +37,16 @@ class SQImageWriter:
                 "height": ("INT", {"default": 0}),
                 "positive": (any_type,),
                 "negative": (any_type,),
-                "generator_forward": (any_type,),
-                "reader_forward": (any_type,),
+                "generator_forward": (
+                    any_type,
+                    {"tooltip": "Pass in forwarded metadata from generator node"},
+                ),
+                "reader_forward": (
+                    any_type,
+                    {
+                        "tooltip": "Pass in forwarded metadata from reader node. Seed, steps and cfg can be overriden by their respective inputs"
+                    },
+                ),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
@@ -132,6 +149,7 @@ class SQImageWriter:
             prompt,
             extra_pnginfo,
             metadata,
+            final=final == "true",
             timestamp_format=timestamp_format,
         )
         print(f"Saved image to {filename}")

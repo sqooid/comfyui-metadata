@@ -69,12 +69,12 @@ class SQImageReader:
             filepath = os.path.join(folder_paths.get_output_directory(), filepath)
         with open(filepath, "rb") as f:
             img = Image.open(f)
-        img = ImageOps.exif_transpose(img)
-        image = img.convert("RGB")
-        image = np.array(image).astype(np.float32) / 255.0
-        image = torch.from_numpy(image)[None,]
-        img.load()
-        info = img.info
+            img.load()
+            img = ImageOps.exif_transpose(img)
+            image = img.convert("RGB")
+            image = np.array(image).astype(np.float32) / 255.0
+            image = torch.from_numpy(image)[None,]
+            info = img.info
         metadata_json = info.get("metadata")
         if metadata_json is None:
             raise ValueError("No compatible metadata found")
