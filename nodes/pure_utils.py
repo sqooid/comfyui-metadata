@@ -25,6 +25,10 @@ def hash_var(var: str):
     return hash_value
 
 
+def log(msg):
+    print(f"[SQNodes] {msg}")
+
+
 if __name__ == "__main__":
     text = "chicken, poo, {cat||}, {dog|dead {fish|whale}}"
     print(parse_text(text))

@@ -3,7 +3,7 @@ import comfy.sd
 import comfy.utils
 import torch
 from .utils import any_type, load_lora
-from .pure_utils import hash_var
+from .pure_utils import hash_var, log
 from .types import LoraMetadata, LoraMetadataOutput, GeneratorForward
 import comfy.samplers
 
@@ -127,7 +127,9 @@ class SQParameterGenerator:
     RETURN_NAMES = ("model_name", "vae_name", "sampler", "scheduler", "forward")
     CATEGORY = "SQNodes"
     FUNCTION = "generate"
-    DESCRIPTION = "Generate reusable generation parameters"
+    DESCRIPTION = (
+        "Define generation parameters for use in generation other image writer"
+    )
 
     def generate(self, ckpt_name, vae_name, sampler, scheduler):
         forward: GeneratorForward = {
@@ -165,7 +167,7 @@ class SQCheckpointLoader:
             output_clip=True,
             embedding_directory=folder_paths.get_folder_paths("embeddings"),
         )
-        print(
+        log(
             f"checkpoint loaded: {ckpt_name} {hash_var(str(out[0]))} {hash_var(str(out[1]))} {hash_var(str(out[2]))}"
         )
 
@@ -179,12 +181,15 @@ class SQVaeLoader:
             "required": {
                 "vae_name": (
                     "STRING",
-                    {"tooltip": "The name of the vae to load.", "defaultInput": True},
+                    {
+                        "tooltip": "The name of the vae to load. Taken from generator or reader",
+                        "defaultInput": True,
+                    },
                 ),
                 "built_in": (
                     "VAE",
                     {
-                        "tooltip": "Built-in vae that might be loaded by the checkpoint",
+                        "tooltip": "Built-in vae that might be loaded by the checkpoint. Taken from checkpoint loader",
                         "defaultInput": True,
                     },
                 ),
@@ -195,11 +200,11 @@ class SQVaeLoader:
     RETURN_NAMES = ("vae",)
     CATEGORY = "SQNodes"
     FUNCTION = "load"
-    DESCRIPTION = "Load a VAE from parameter generator output"
+    DESCRIPTION = "Load a VAE from parameter generator or reader output"
 
     def load(self, vae_name, built_in):
         if vae_name == builtin_vae:
-            print(f"vae loaded: built-in {hash_var(str(built_in))}")
+            log(f"vae loaded: built-in {hash_var(str(built_in))}")
             return (built_in,)
         if vae_name in ["taesd", "taesdxl", "taesd3", "taef1"]:
             sd = load_taesd(vae_name)
@@ -208,7 +213,7 @@ class SQVaeLoader:
             sd = comfy.utils.load_torch_file(vae_path)
         vae = comfy.sd.VAE(sd=sd)
 
-        print(f"vae loaded: {vae_name} {hash_var(str(vae))}")
+        log(f"vae loaded: {vae_name} {hash_var(str(vae))}")
 
         return (vae,)
 
@@ -240,7 +245,7 @@ class SQLoraChainLoader:
     RETURN_NAMES = ("model", "clip", "chain")
     CATEGORY = "SQNodes"
     FUNCTION = "load"
-    DESCRIPTION = "Load a Lora and chain outputs for metadata"
+    DESCRIPTION = "Load a Lora and chain outputs for storage as metadata. Pass chain to loras input of writer"
 
     def load(self, lora_name, model, clip, model_strength, clip_strength, chain=None):
         if model_strength == 0 and clip_strength == 0:
@@ -261,7 +266,7 @@ class SQLoraChainLoader:
         else:
             chain = chain + [param]
 
-        print(
+        log(
             f"lora loaded: {lora_name} {hash_var(str(model_lora))} {hash_var(str(clip_lora))}"
         )
 
@@ -286,13 +291,13 @@ class SQLoraAutoLoader:
     RETURN_NAMES = ("model", "clip")
     CATEGORY = "SQNodes"
     FUNCTION = "load"
-    DESCRIPTION = "Load multiple loras as specified in metadata"
+    DESCRIPTION = "Load all loras as specified in reader metadata. Pass in loras output from reader"
 
     def load(self, loras, model, clip):
         ls: list[LoraMetadataOutput] = loras
         model_lora = model
         clip_lora = clip
-        print(f"loading loras: {ls}")
+        log(f"loading loras: {ls}")
         for l in ls:
             if l["model_strength"] == 0 and l["clip_strength"] == 0:
                 continue
@@ -304,7 +309,7 @@ class SQLoraAutoLoader:
                 l["clip_strength"],
             )
 
-            print(
+            log(
                 f"lora loaded: {l['name']} {hash_var(str(model_lora))} {hash_var(str(clip_lora))}"
             )
 

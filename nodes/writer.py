@@ -1,9 +1,9 @@
 from typing import Dict, Literal, Optional
 
 import torch
-import folder_paths
 from .utils import any_type, calculate_hash, save_image
 from .types import MetadataOutput, GeneratorForward, LoraMetadata
+from .pure_utils import log
 
 
 class SQImageWriter:
@@ -14,7 +14,10 @@ class SQImageWriter:
         return {
             "required": {
                 "image": ("IMAGE",),
-                "directory": ("STRING", {"default": "."}),
+                "directory": (
+                    "STRING",
+                    {"default": ".", "tooltip": "Directory to save images"},
+                ),
                 "filename": (
                     "STRING",
                     {
@@ -35,8 +38,18 @@ class SQImageWriter:
                 "cfg": ("FLOAT", {"default": 0.0}),
                 "width": ("INT", {"default": 0}),
                 "height": ("INT", {"default": 0}),
-                "positive": (any_type,),
-                "negative": (any_type,),
+                "positive": (
+                    any_type,
+                    {
+                        "tooltip": "List of positive prompts (obtained through chain prompter node)"
+                    },
+                ),
+                "negative": (
+                    any_type,
+                    {
+                        "tooltip": "List of negative prompts (obtained through chain prompter node)"
+                    },
+                ),
                 "generator_forward": (
                     any_type,
                     {"tooltip": "Pass in forwarded metadata from generator node"},
@@ -152,6 +165,6 @@ class SQImageWriter:
             final=final == "true",
             timestamp_format=timestamp_format,
         )
-        print(f"Saved image to {filename}")
+        log(f"Saved image to {filename}")
 
         return ()

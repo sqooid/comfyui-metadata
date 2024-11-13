@@ -6,6 +6,7 @@ import torch
 import folder_paths
 from .utils import any_type
 from .types import MetadataOutput
+from .pure_utils import log
 import comfy.samplers
 
 
@@ -18,7 +19,7 @@ class SQImageReader:
                     "STRING",
                     {
                         "default": "",
-                        "tooltip": "Image file to read metadata from",
+                        "tooltip": "Image file to read metadata from. Paths starting with '.' are relative to the output directory",
                     },
                 ),
             },
@@ -64,7 +65,7 @@ class SQImageReader:
     DESCRIPTION = "Save images with reusable generation metadata"
 
     def read(self, filepath: str):
-        print(f"File: {filepath}")
+        log(f"File: {filepath}")
         if filepath.startswith("."):
             filepath = os.path.join(folder_paths.get_output_directory(), filepath)
         with open(filepath, "rb") as f:
@@ -79,7 +80,7 @@ class SQImageReader:
         if metadata_json is None:
             raise ValueError("No compatible metadata found")
         metadata: MetadataOutput = json.loads(metadata_json)
-        print(metadata)
+        log(metadata)
 
         model_name = metadata["model"]["name"]
         vae_name = metadata["vae"]["name"]

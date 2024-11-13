@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 import torch
 from .utils import any_type
-from .pure_utils import hash_var, parse_text
+from .pure_utils import hash_var, parse_text, log
 from .types import PromptChain
 
 
@@ -48,7 +48,7 @@ class SQChainPrompt:
     RETURN_NAMES = ("chain", "conditioning", "prompts")
     CATEGORY = "SQNodes"
     FUNCTION = "parse"
-    DESCRIPTION = "Chain prompts with conditioning concat"
+    DESCRIPTION = "Chain prompts with conditioning concat for longer attention. Pass prompts output to pos/neg writer input"
 
     def parse(
         self,
@@ -71,7 +71,7 @@ class SQChainPrompt:
             chain["conditioning"] = new_cond
             chain["prompts"] = chain["prompts"] + [text]
 
-        print(f"prompt loaded {text[:8]}... {hash_var(str(new_cond))}")
+        log(f"prompt loaded {text[:8]}... {hash_var(str(new_cond))}")
 
         return chain, new_cond, chain["prompts"]
 
@@ -90,14 +90,14 @@ class SQAutoPrompt:
     RETURN_NAMES = ("conditioning",)
     CATEGORY = "SQNodes"
     FUNCTION = "parse"
-    DESCRIPTION = "Chain prompts with conditioning concat"
+    DESCRIPTION = "Load all prompts as specified in reader metadata. Pass in pos/neg output from reader"
 
     def parse(self, prompts: list[str], clip):
         conditioning = encode_cond(clip, prompts[0])
-        print(f"prompt loaded: {prompts[0][:8]}... {hash_var(str(conditioning))}")
+        log(f"prompt loaded: {prompts[0][:8]}... {hash_var(str(conditioning))}")
         for p in prompts[1:]:
             conditioning = concat_cond(conditioning, encode_cond(clip, p))
 
-            print(f"prompt loaded: {p[:8]}... {hash_var(str(conditioning))}")
+            log(f"prompt loaded: {p[:8]}... {hash_var(str(conditioning))}")
 
         return (conditioning,)
