@@ -83,9 +83,10 @@ def save_image(
     i = 255.0 * image.cpu().numpy()
     img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
+    exif = img.getexif()
     mdata = None
     mdata = PngInfo()
-    mdata.add_text("parameters", format_civit_metadata(metadata))
+    exif["parameters"]= format_civit_metadata(metadata)
     mdata.add_text("metadata", json.dumps(metadata))
     if not final:
         if not args.disable_metadata:
@@ -95,11 +96,19 @@ def save_image(
                 for x in extra_pnginfo:
                     mdata.add_text(x, json.dumps(extra_pnginfo[x]))
 
-    img.save(
-        os.path.join(output_path, filename),
-        pnginfo=mdata,
-        compress_level=compress_level,
-    )
+    save_path = os.path.join(output_path, filename)
+    if filename.endswith(".png"):
+        img.save(
+            save_path,
+            pnginfo=mdata,
+            compress_level=compress_level,
+        )
+    elif filename.endswith(".webp"):
+        img.save(
+            save_path,
+            lossless=True,
+            exif=mdata,
+        )
     return filename
 
 
@@ -114,8 +123,8 @@ def load_lora(model, clip, lora_name, model_strength, clip_strength):
 
 
 def format_civit_metadata(metadata: MetadataOutput):
-    positive = ",".join(metadata["positive"])
-    negative = "Negative prompt: " + ",".join(metadata["negative"])
+    positive = ", ".join(metadata["positive"])
+    negative = "Negative prompt: " + ", ".join(metadata["negative"])
     lora_hashes = ", ".join(
         [f"{lora['name']}: {lora['sha']}" for lora in metadata["loras"]]
     )
