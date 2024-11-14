@@ -1,4 +1,6 @@
 import hashlib
+import piexif
+import piexif.helper
 import json
 from PIL.PngImagePlugin import PngInfo
 import typing
@@ -109,24 +111,34 @@ def save_image(
 
     # general exif metadata
     elif filename.endswith(".webp"):
-        exif = img.getexif()
-        exif_ifd = exif.get_ifd(34665)
-        # exif_ifd[ExifTags.Base.UserComment] = civit_metadata
-        # exif[ExifTags.Base.Software] = metadata_str
+        exif = {
+            "Exif": {
+                piexif.ExifIFD.UserComment: (
+                    piexif.helper.UserComment.dump(civit_metadata, encoding="unicode")
+                )
+            },
+            "0th": {
+                piexif.ImageIFD.Software: metadata_str,
+            },
+        }
+
         if not final:
             if prompt is not None:
-                exif[0x0110] = f"prompt:{prompt_str}"
+                exif["0th"][0x0110] = f"prompt:{prompt_str}"
             if extra_pnginfo is not None:
                 inital_exif = 0x010F
                 for x in extra_pnginfo:
-                    exif[inital_exif] = "{}:{}".format(x, json.dumps(extra_pnginfo[x]))
+                    exif["0th"][inital_exif] = "{}:{}".format(
+                        x, json.dumps(extra_pnginfo[x])
+                    )
                     inital_exif -= 1
 
         img.save(
             save_path,
             lossless=True,
-            exif=exif,
         )
+        exif_bytes = piexif.dump(exif)
+        piexif.insert(exif_bytes, save_path)
     return filename
 
 
@@ -142,6 +154,8 @@ def load_lora(model, clip, lora_name, model_strength, clip_strength):
 
 def format_civit_metadata(metadata: MetadataOutput):
     positive = ", ".join(metadata["positive"])
+    for w in ["loli", "lolita", "underage", "child", "children"]:
+        positive = positive.replace(w, "")
     negative = "Negative prompt: " + ", ".join(metadata["negative"])
     lora_hashes = ", ".join(
         [f"{lora['name']}: {lora['sha']}" for lora in metadata["loras"]]

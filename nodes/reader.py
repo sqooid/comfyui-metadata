@@ -1,4 +1,6 @@
 import json
+import re
+from typing import cast
 import numpy as np
 import os
 from PIL import Image, ImageOps
@@ -72,11 +74,16 @@ class SQImageReader:
             img = Image.open(f)
             img.load()
             img = ImageOps.exif_transpose(img)
+            assert img is not None
             image = img.convert("RGB")
             image = np.array(image).astype(np.float32) / 255.0
             image = torch.from_numpy(image)[None,]
-            info = img.info
-        metadata_json = info.get("metadata")
+            if re.search(r"\.png$", filepath):
+                info = img.info
+                metadata_json = info.get("metadata")
+            elif re.search(r"\.(jpe?g|webp)$", filepath):
+                exif = img.getexif()
+                metadata_json = str(exif[0x0131])
         if metadata_json is None:
             raise ValueError("No compatible metadata found")
         metadata: MetadataOutput = json.loads(metadata_json)
