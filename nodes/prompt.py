@@ -76,7 +76,8 @@ class SQChainPrompt:
         else:
             new_cond = concat_cond(chain["conditioning"], conditioning)
             chain = {
-                "prompts": copy.deepcopy(chain["prompts"]),
+                # shallow copy is fine because strings are immutable
+                "prompts": chain["prompts"].copy(),
                 "conditioning": new_cond,
                 "clip": clip,
             }
