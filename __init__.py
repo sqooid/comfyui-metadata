@@ -2,6 +2,7 @@ from .nodes.reader import *
 from .nodes.writer import *
 from .nodes.generator import *
 from .nodes.prompt import *
+from .server.routes import *
 
 NODE_CLASS_MAPPINGS = {
     "SQ Image Writer": SQImageWriter,
@@ -15,4 +16,7 @@ NODE_CLASS_MAPPINGS = {
     "SQ Prompt Auto": SQAutoPrompt,
 }
 
-__all__ = ["NODE_CLASS_MAPPINGS"]
+WEB_DIRECTORY = "./js"
+
+
+__all__ = ["NODE_CLASS_MAPPINGS", "WEB_DIRECTORY"]
