@@ -45,8 +45,8 @@ class SQChainPrompt:
             },
         }
 
-    RETURN_TYPES = (any_type, "CONDITIONING", any_type)
-    RETURN_NAMES = ("chain", "conditioning", "prompts")
+    RETURN_TYPES = (any_type, "CONDITIONING")
+    RETURN_NAMES = ("chain", "conditioning")
     CATEGORY = "SQNodes"
     FUNCTION = "parse"
     DESCRIPTION = "Chain prompts with conditioning concat for longer attention. Pass prompts output to pos/neg writer input"

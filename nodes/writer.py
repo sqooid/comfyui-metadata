@@ -2,7 +2,7 @@ from typing import Dict, Literal, Optional
 
 import torch
 from .utils import any_type, calculate_hash, save_image
-from .types import MetadataOutput, GeneratorForward, LoraMetadata
+from .types import MetadataOutput, GeneratorForward, LoraMetadata, PromptChain
 from .pure_utils import log
 
 
@@ -41,14 +41,14 @@ class SQImageWriter:
                 "positive": (
                     any_type,
                     {
-                        "tooltip": "List of positive prompts (obtained through chain prompter node)",
+                        "tooltip": "List of positive prompts (obtained through chain prompter node chain output)",
                         "defaultInput": True,
                     },
                 ),
                 "negative": (
                     any_type,
                     {
-                        "tooltip": "List of negative prompts (obtained through chain prompter node)",
+                        "tooltip": "List of negative prompts (obtained through chain prompter node chain output)",
                         "defaultInput": True,
                     },
                 ),
@@ -86,8 +86,8 @@ class SQImageWriter:
         cfg: Optional[float] = None,
         width: Optional[int] = None,
         height: Optional[int] = None,
-        positive: Optional[list[str]] = None,
-        negative: Optional[list[str]] = None,
+        positive: Optional[PromptChain] = None,
+        negative: Optional[PromptChain] = None,
         generator_forward: Optional[GeneratorForward] = None,
         reader_forward: Optional[MetadataOutput] = None,
         prompt=None,
@@ -152,8 +152,8 @@ class SQImageWriter:
                 "steps": steps,
                 "width": width,
                 "height": height,
-                "positive": positive,
-                "negative": negative,
+                "positive": positive["prompts"],
+                "negative": negative["prompts"],
                 "sampler": generator_forward["sampler"],
                 "scheduler": generator_forward["scheduler"],
             }  # type: ignore
