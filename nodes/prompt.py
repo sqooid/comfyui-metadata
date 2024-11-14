@@ -75,8 +75,12 @@ class SQChainPrompt:
             new_cond = conditioning
         else:
             new_cond = concat_cond(chain["conditioning"], conditioning)
-            chain["conditioning"] = new_cond
-            chain["prompts"] = chain["prompts"] + [text]
+            chain = {
+                "prompts": copy.deepcopy(chain["prompts"]),
+                "conditioning": new_cond,
+                "clip": clip,
+            }
+            chain["prompts"].append(text)
 
         log(f"prompt loaded {text[:8]}... {hash_var(str(new_cond))}")
 
