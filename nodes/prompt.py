@@ -1,4 +1,5 @@
 import copy
+import re
 from typing import Any, Optional
 
 import torch
@@ -51,8 +52,10 @@ class SQChainPrompt:
     DESCRIPTION = "Chain prompts with conditioning concat for longer attention. Pass prompts output to pos/neg writer input"
 
     @classmethod
-    def IS_CHANGED(cls):
-        return float("NaN")
+    def IS_CHANGED(cls, prompt, clip, chain):
+        if re.search(r"[{}]", prompt):
+            return float("NaN")
+        return 0
 
     def parse(
         self,

@@ -11,6 +11,8 @@ def parse_text(text: str):
         options = match.group(1).split("|")
         choice = random.choice(options)
         text = text.replace(match.group(0), choice, 1)
+    if re.search(r"[{}]", text):
+        raise ValueError("Brackets are not matching")
     s = text.split(",")
     s = map(str.strip, s)
     s = filter(bool, s)
