@@ -22,7 +22,7 @@ class SQImageWriter:
                     "STRING",
                     {
                         "default": "image_${3}.png",
-                        "tooltip": "Use ${n} to label index with padding n. Use $timestamp to insert timestamp as formatted",
+                        "tooltip": "png and webp supported. Use ${n} to label index with padding n. Use $timestamp to insert timestamp as formatted",
                     },
                 ),
                 "timestamp_format": ("STRING", {"default": "%Y%m%d-%H%M%S"}),
@@ -33,21 +33,23 @@ class SQImageWriter:
             },
             "optional": {
                 "loras": (any_type,),
-                "seed": ("INT", {"default": 0}),
-                "steps": ("INT", {"default": 0}),
-                "cfg": ("FLOAT", {"default": 0.0}),
-                "width": ("INT", {"default": 0}),
-                "height": ("INT", {"default": 0}),
+                "seed": ("INT", {"default": 0, "defaultInput": True}),
+                "steps": ("INT", {"default": 0, "defaultInput": True}),
+                "cfg": ("FLOAT", {"default": 0.0, "defaultInput": True}),
+                "width": ("INT", {"default": 0, "defaultInput": True}),
+                "height": ("INT", {"default": 0, "defaultInput": True}),
                 "positive": (
                     any_type,
                     {
-                        "tooltip": "List of positive prompts (obtained through chain prompter node)"
+                        "tooltip": "List of positive prompts (obtained through chain prompter node)",
+                        "defaultInput": True,
                     },
                 ),
                 "negative": (
                     any_type,
                     {
-                        "tooltip": "List of negative prompts (obtained through chain prompter node)"
+                        "tooltip": "List of negative prompts (obtained through chain prompter node)",
+                        "defaultInput": True,
                     },
                 ),
                 "generator_forward": (
