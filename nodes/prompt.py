@@ -52,7 +52,7 @@ class SQChainPrompt:
     DESCRIPTION = "Chain prompts with conditioning concat for longer attention. Pass prompts output to pos/neg writer input"
 
     @classmethod
-    def IS_CHANGED(cls, prompt, clip, chain):
+    def IS_CHANGED(cls, prompt, clip=None, chain=None):
         if re.search(r"[{}]", prompt):
             return float("NaN")
         return 0
