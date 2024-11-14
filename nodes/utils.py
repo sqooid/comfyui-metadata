@@ -8,7 +8,7 @@ import os
 import re
 import datetime
 from typing import Optional
-from PIL import Image
+from PIL import Image, ExifTags
 import numpy as np
 from .types import MetadataOutput
 from comfy.cli_args import args
@@ -83,31 +83,49 @@ def save_image(
     i = 255.0 * image.cpu().numpy()
     img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
-    exif = img.getexif()
-    mdata = None
-    mdata = PngInfo()
-    exif["parameters"]= format_civit_metadata(metadata)
-    mdata.add_text("metadata", json.dumps(metadata))
-    if not final:
-        if not args.disable_metadata:
-            if prompt is not None:
-                mdata.add_text("prompt", json.dumps(prompt))
-            if extra_pnginfo is not None:
-                for x in extra_pnginfo:
-                    mdata.add_text(x, json.dumps(extra_pnginfo[x]))
-
     save_path = os.path.join(output_path, filename)
+    civit_metadata = format_civit_metadata(metadata)
+    metadata_str = json.dumps(metadata)
+    prompt_str = json.dumps(prompt)
+
+    # png tEXt metadata
     if filename.endswith(".png"):
+        mdata = None
+        mdata = PngInfo()
+        mdata.add_text("parameters", civit_metadata)
+        mdata.add_text("metadata", metadata_str)
+        if not final:
+            if not args.disable_metadata:
+                if prompt is not None:
+                    mdata.add_text("prompt", prompt_str)
+                if extra_pnginfo is not None:
+                    for x in extra_pnginfo:
+                        mdata.add_text(x, json.dumps(extra_pnginfo[x]))
         img.save(
             save_path,
             pnginfo=mdata,
             compress_level=compress_level,
         )
+
+    # general exif metadata
     elif filename.endswith(".webp"):
+        exif = img.getexif()
+        exif_ifd = exif.get_ifd(34665)
+        # exif_ifd[ExifTags.Base.UserComment] = civit_metadata
+        # exif[ExifTags.Base.Software] = metadata_str
+        if not final:
+            if prompt is not None:
+                exif[0x0110] = f"prompt:{prompt_str}"
+            if extra_pnginfo is not None:
+                inital_exif = 0x010F
+                for x in extra_pnginfo:
+                    exif[inital_exif] = "{}:{}".format(x, json.dumps(extra_pnginfo[x]))
+                    inital_exif -= 1
+
         img.save(
             save_path,
             lossless=True,
-            exif=mdata,
+            exif=exif,
         )
     return filename
 
