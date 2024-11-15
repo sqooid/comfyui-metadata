@@ -1,7 +1,7 @@
 import copy
 import re
 from typing import Any, Optional
-
+from server import PromptServer
 import torch
 from .utils import any_type
 from .pure_utils import hash_var, parse_text, log
@@ -113,3 +113,35 @@ class SQAutoPrompt:
             log(f"prompt loaded: {p[:8]}... {hash_var(str(conditioning))}")
 
         return (conditioning,)
+
+
+class SQPromptDisplay:
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "chain": (any_type,),
+                "actual_prompt": (
+                    "STRING",
+                    {
+                        "default": "",
+                        "multiline": True,
+                    },
+                ),
+            },
+            "hidden": {"node_id": "UNIQUE_ID"},
+        }
+
+    RETURN_TYPES = ()
+    RETURN_NAMES = ()
+    OUTPUT_NODE = True
+    CATEGORY = "SQNodes"
+    FUNCTION = "parse"
+    DESCRIPTION = "Display the actual prompt used by a chain prompter"
+
+    def parse(self, chain: PromptChain, actual_prompt, node_id):
+        text = ",\n".join(chain["prompts"])
+        PromptServer.instance.send_sync(
+            "sq.prompt.text", {"node": node_id, "text": text}
+        )
+        return ()

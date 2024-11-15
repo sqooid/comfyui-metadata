@@ -14,6 +14,7 @@ NODE_CLASS_MAPPINGS = {
     "SQ Lora Auto Loader": SQLoraAutoLoader,
     "SQ Prompt Chain": SQChainPrompt,
     "SQ Prompt Auto": SQAutoPrompt,
+    "SQ Prompt Display": SQPromptDisplay,
 }
 
 WEB_DIRECTORY = "./js"
