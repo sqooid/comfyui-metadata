@@ -12,11 +12,12 @@ def parse_text(text: str):
             break
         options = match.group(1).split("|")
         weights = []
-        for o in options:
+        for i in range(len(options)):
+            o = options[i].strip()
             weight_match = re.search(r"\s*^(\d*\.?\d*):", o)
             if weight_match:
                 weight = float(weight_match.group(1))
-                o = o.replace(weight_match.group(0), "")
+                options[i] = o.replace(weight_match.group(0), "")
                 weights.append(weight)
             else:
                 weights.append(1)
