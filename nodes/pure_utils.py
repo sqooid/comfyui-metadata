@@ -2,6 +2,8 @@ import random
 import re
 import hashlib
 
+import numpy
+
 
 def parse_text(text: str):
     while True:
@@ -9,7 +11,17 @@ def parse_text(text: str):
         if match is None:
             break
         options = match.group(1).split("|")
-        choice = random.choice(options)
+        weights = []
+        for o in options:
+            weight_match = re.search(r"(\d+):", o)
+            if weight_match:
+                weight = int(weight_match.group(1))
+                o = o.replace(weight_match.group(0), "")
+                weights.append(weight)
+            else:
+                weights.append(1)
+
+        choice = random.choices(options, weights, k=1)[0]
         text = text.replace(match.group(0), choice, 1)
     if re.search(r"[{}]", text):
         raise ValueError("Brackets are not matching")

@@ -93,7 +93,6 @@ class SQImageWriter:
         prompt=None,
         extra_pnginfo=None,
     ):
-
         if reader_forward is not None:
             metadata = reader_forward
 
