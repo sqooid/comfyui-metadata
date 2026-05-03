@@ -81,15 +81,21 @@ def save_image(
     output_path = os.path.join(folder_paths.get_output_directory(), directory)
     os.makedirs(output_path, exist_ok=True)
     ext = os.path.splitext(filename)[1].lower()
-    file_count = len(list(filter(lambda x: x.endswith(ext), os.listdir(output_path))))
-    filename = format_filename(filename, file_count, timestamp_format)
+    files = os.listdir(output_path)
+    file_count = len(list(filter(lambda x: x.endswith(ext), files)))
+    max_index = map(lambda x: re.search(r"(\d+)", x), files)
+    file_index = (
+        max([int(match.group(1)) for match in max_index if match] + [0] + [file_count])
+        + 1
+    )
+    filename = format_filename(filename, file_index, timestamp_format)
     i = 255.0 * image.cpu().numpy()
     img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
     save_path = os.path.join(output_path, filename)
     while os.path.exists(save_path):
-        file_count += 1
-        filename = format_filename(filename, file_count, timestamp_format)
+        file_index += 1
+        filename = format_filename(filename, file_index, timestamp_format)
         save_path = os.path.join(output_path, filename)
     civit_metadata = format_civit_metadata(metadata)
     metadata_str = json.dumps(metadata)
