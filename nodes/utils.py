@@ -80,12 +80,17 @@ def save_image(
 ):
     output_path = os.path.join(folder_paths.get_output_directory(), directory)
     os.makedirs(output_path, exist_ok=True)
-    file_count = len(os.listdir(output_path))
+    ext = os.path.splitext(filename)[1].lower()
+    file_count = len(list(filter(lambda x: x.endswith(ext), os.listdir(output_path))))
     filename = format_filename(filename, file_count, timestamp_format)
     i = 255.0 * image.cpu().numpy()
     img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
     save_path = os.path.join(output_path, filename)
+    while os.path.exists(save_path):
+        file_count += 1
+        filename = format_filename(filename, file_count, timestamp_format)
+        save_path = os.path.join(output_path, filename)
     civit_metadata = format_civit_metadata(metadata)
     metadata_str = json.dumps(metadata)
     prompt_str = json.dumps(prompt)
